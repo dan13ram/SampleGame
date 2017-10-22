@@ -20,7 +20,7 @@ public class OrientationData implements SensorEventListener {
     private float[] accelOutput;
     private float[] magOutput;
 
-    private float[] orientation;
+    private float[] orientation = new float[3];
     private float[] startOrientation = null;
 
     public float[] getStartOrientation() {
@@ -50,12 +50,13 @@ public class OrientationData implements SensorEventListener {
     public void pause() {
         manager.unregisterListener(this);
     }
+
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            accelOutput = sensorEvent.values;
+            accelOutput = sensorEvent.values.clone();
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
-            magOutput = sensorEvent.values;
+            magOutput = sensorEvent.values.clone();
         }
 
         if (accelOutput != null && magOutput != null) {

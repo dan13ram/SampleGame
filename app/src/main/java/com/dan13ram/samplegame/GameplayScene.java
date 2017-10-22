@@ -21,15 +21,25 @@ public class GameplayScene implements Scene {
     private boolean gaveOver = false;
     private long gaveOverTime;
 
+    private OrientationData orientationData;
+    private long frameTime;
+
     public GameplayScene() {
         player = new RectPlayer(new Rect(100, 100, 200, 200));
-        reset();
+        playerPoint = new Point(Constants.SCREEN_WIDTH / 2, 3 * Constants.SCREEN_HEIGHT / 4);
+        player.update(playerPoint);
+
+        obstacleManager = new ObstacleManager(200, 350, 75, Color.BLACK);
+
+        orientationData = new OrientationData();
+        orientationData.register();
+        frameTime = System.currentTimeMillis();
     }
 
 
     public void reset() {
         playerPoint = new Point(Constants.SCREEN_WIDTH / 2, 3 * Constants.SCREEN_HEIGHT / 4);
-        player.update();
+        player.update(playerPoint);
         obstacleManager = new ObstacleManager(200, 350, 75, Color.BLACK);
         movingPlayer = false;
     }
@@ -51,8 +61,38 @@ public class GameplayScene implements Scene {
     @Override
     public void update() {
         if (!gaveOver) {
-            obstacleManager.update();
+            if (frameTime < Constants.INIT_TIME) {
+                frameTime = Constants.INIT_TIME;
+            }
+            int elapsedTime = (int) (System.currentTimeMillis() - frameTime);
+            frameTime = System.currentTimeMillis();
+            if (orientationData.getOrientation() != null && orientationData.getStartOrientation() != null) {
+                float pitch = orientationData.getOrientation()[1] - orientationData.getStartOrientation()[1];
+                float roll = orientationData.getOrientation()[2] - orientationData.getStartOrientation()[2];
+
+                float xSpeed = 2 * roll * Constants.SCREEN_WIDTH / 1000f;
+                float ySpeed = pitch * Constants.SCREEN_HEIGHT / 1000f;
+
+                playerPoint.x += Math.abs(xSpeed) > 0.1 ? xSpeed * elapsedTime : 0;
+//                playerPoint.x += xSpeed * elapsedTime;
+                playerPoint.y -= Math.abs(ySpeed) > 0.1 ? ySpeed * elapsedTime : 0;
+//                playerPoint.y -= ySpeed * elapsedTime;
+            }
+
+            if (playerPoint.x < 0) {
+                playerPoint.x = 0;
+            } else if (playerPoint.x > Constants.SCREEN_WIDTH) {
+                playerPoint.x = Constants.SCREEN_WIDTH;
+            }
+
+            if (playerPoint.y < 0) {
+                playerPoint.y = 0;
+            } else if (playerPoint.y > Constants.SCREEN_HEIGHT) {
+                playerPoint.y = Constants.SCREEN_HEIGHT;
+            }
+
             player.update(playerPoint);
+            obstacleManager.update();
             if (obstacleManager.playerCollide(player)) {
                 gaveOver = true;
                 gaveOverTime = System.currentTimeMillis();
@@ -66,7 +106,7 @@ public class GameplayScene implements Scene {
     }
 
     @Override
-    public void receiveTouch(MotionEvent event){
+    public void receiveTouch(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (!gaveOver && player.getRectangle().contains((int) event.getX(), (int) event.getY())) {
@@ -75,6 +115,7 @@ public class GameplayScene implements Scene {
                 if (gaveOver && (System.currentTimeMillis() - gaveOverTime) >= 2000) {
                     reset();
                     gaveOver = false;
+                    orientationData.newGame();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:

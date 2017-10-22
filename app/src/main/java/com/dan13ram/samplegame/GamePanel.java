@@ -20,8 +20,10 @@ class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         super(context);
         getHolder().addCallback(this);
 
-        thread = new MainThread(getHolder(), this);
         Constants.CURRENT_CONTEXT = context;
+
+        thread = new MainThread(getHolder(), this);
+
         sceneManager = new SceneManager();
 
         setFocusable(true);
@@ -33,9 +35,9 @@ class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         thread = new MainThread(getHolder(), this);
+        Constants.INIT_TIME = System.currentTimeMillis();
         thread.setRunning(true);
         thread.start();
-        Constants.INIT_TIME = System.currentTimeMillis();
 
     }
 
